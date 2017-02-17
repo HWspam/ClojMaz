@@ -8,7 +8,7 @@
     (for [row (range size)]
       (vec
         (for [col (range size)]
-          {:row row, :col col, :visited? false, :bottom? true, :right? true})))))
+          {:row row, :col col, :visited? false, :bottom? true, :right? true, :start? false :end? false})))))
 
 
 (defn psbl-nybrs [rooms row col]
@@ -37,6 +37,7 @@
     (assoc-in rooms [newRow newCol :right?] false)
     (> newCol oldCol)
     (assoc-in rooms [oldRow oldCol :right?] false)))
+    
 
 (declare create-maze)
 
@@ -47,26 +48,41 @@
       rooms
       (create-loop new-rooms oldRow oldCol newRow newCol))))
 
+(defn has-no-end? [rooms]
+  (= 1 (count (set (map :end? (flatten rooms))))))
+
 (defn create-maze [rooms row col]
   (let [rooms (assoc-in rooms [row col :visited?] true)
         next-room (random-neighbor rooms row col)]
     (if next-room
       (create-loop rooms row col (:row next-room) (:col next-room))
-      rooms)))
+      (if (has-no-end? rooms)
+        (assoc-in rooms [row col :end?] true)
+          
+        rooms))))
+    
+  
                   
 
 (defn -main []
   (let [rooms (create-room)
+        rooms (assoc-in rooms [0 0 :start?] true)
         rooms (create-maze rooms 0 0)]
     (doseq [_ rooms]
       (print " _"))
     (println)
     (doseq [row rooms]
-      (print "1")
+      (print "|")
       (doseq [room row]
-        (if (:bottom? room)
-          (print "_")
-          (print " "))
+        (cond
+          (:start? room)
+          (print "o")
+          (:end? room)
+          (print "x")
+          :else
+          (if (:bottom? room)
+            (print "_")
+            (print " ")))
         (if (:right? room)
           (print "|")
           (print " ")))
